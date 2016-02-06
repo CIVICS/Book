@@ -1,0 +1,838 @@
+See: http://docs.statedecoded.com/api.html
+
+----
+
+Contents
+
+How to...
+Methods
+Dictionary
+Law
+Search
+Structure
+Suggest
+Errors
+How to...
+
+...get an API key.
+
+Register for a key on the site in question (e.g., Virginia).
+
+...browse the Code starting at the root.
+
+http://vacode.org/api/structure/?key=[api_key]
+
+...get information about a given law.
+
+http://vacode.org/api/law/[section_number]?key=[api_key]
+
+...get a information about a given title/chapter/part/etc.
+
+http://vacode.org/api/structure/[identifier]?key=[api_key]
+
+...get all definitions for a word or phrase.
+
+http://vacode.org/api/dictionary/[term]?key=[api_key]
+
+...get the definition for a word or phrase as it's used in a specific law.
+
+http://vacode.org/api/dictionary/[term]?section=[section_number]&key=[api_key]
+
+...restrict the fields that are returned.
+
+Append &fields=field1,field2,field3 to the query, substituting the desired field names for "field1," etc.
+
+Methods
+
+Dictionary
+
+When provided with a term, returns all definitions for that term found within the code. Optionally, when provided with a section identifier and no term, returns all terms that apply within the scope of that section.
+
+Query format
+
+http://vacode.org/api/dictionary/[word_or_phrase]?key=[api_key]
+
+Optional parameters
+
+Section number
+
+Pass the parameter section and a section number, and get only the definition of the term that is relevant to that law. (Most terms have a defined scope of a given structural unit or law.) N.B.: Because only one definition is returned, rather than providing an array of definitions, just a single definition’s fields are returned. They are not stored as the lone element in an array, but are at the top level of the JSON.
+
+http://vacode.org/api/dictionary/person?section=12.1-14&key=[api_key] http://vacode.org/api/dictionary/?section=12.1-14&key=[api_key]
+
+Callback
+
+Pass the parameter callback and a callback string to have results returned as JSONP.
+
+http://vacode.org/api/dictionary/[word_or_phrase]?key=[api_key]&callback=d9f3lIb013
+
+Specified fields
+
+Pass the parameter fields and a comma-separated listing of fields to limit the response to those fields.
+
+http://vacode.org/api/dictionary/word_or_phrase]?key=[api_key]&fields=definition
+
+Fields
+
+When looking up a definition
+
+Name	Type	Description	Notes
+term	string	The term that is being defined.	
+definition	string	The text of the definition.	
+scope	string	How broadly that this definition applies.	This is based on the structural unit labels, which vary between implementations. Possible values might be title, chapter, part, or others. A definition that applies to just one law would have a value of section, while a definition that applies to the whole code would have a value of global.
+section_number	string	The unique identifier for the section in which the definition appears.	
+url	string	The URL of the section in which the definition appears.	
+formatted	string	The definition, with display-ready formatting and a citation.	This is the same as the content of definition, with typographic niceties and a parenthetical citation.
+api_version	integer	The version of the API that is returning this result.	
+Term list
+
+Name	Type	Description	Notes
+term	string	The term that is being defined.	
+Sample queries and responses
+
+http://vacode.org/api/dictionary/person?section=12.1-14&key=[api_key]
+
+
+{
+    "term": "person",
+    "definition": "“Person” includes any individual, corporation, partnership, association, cooperative, limited liability company, trust, joint venture, government, political subdivision, or any other legal or commercial entity and any successor, representative, agent, agency, or instrumentality thereof.",
+    "section_number": "1-230",
+    "scope": "global",
+    "url": "http://vacode.org/1-230/",
+    "formatted": "“Person” includes any individual, corporation, partnership, association, cooperative, limited liability company, trust, joint venture, government, political subdivision, or any other legal or commercial entity and any successor, representative, agent, agency, or instrumentality thereof. (<a href=\"http://vacode.org/1-230/\">§&nbsp;1-230<\/a>)",
+    "api_version": "1.0"
+}
+Edited for brevity.
+http://vacode.org/api/dictionary/?section=12.1-14&key=[api_key]
+
+
+{
+	0: "adult",
+	1: "bond with surety",
+	2: "state agency",
+	3: "city",
+	4: "collegial body",
+	5: "courts of record",
+	6: "ex officio",
+	7: "includes",
+	8: "real estate",
+	9: "blighted property",
+	api_version: "1.0"
+}
+Law
+
+When provided with a section number identifying an individual law, returns everything that The State Decoded knows about that law.
+
+Query format
+
+http://vacode.org/api/law/[section_number]?key=[api_key]
+
+Optional parameters
+
+Callback
+
+Pass the parameter callback and a callback string to have results returned as JSONP.
+
+http://vacode.org/api/law/[section_number]?key=[api_key]&callback=d9f3lIb013
+
+Specified fields
+
+Pass the parameter fields and a comma-separated listing of fields to limit the response to those fields.
+
+http://vacode.org/api/law/[section_number]?key=[api_key]&fields=catch_line,url_official_url,citation
+
+Fields
+
+Name	Type	Description	Notes
+section_number	string	The unique identifier for this section.	
+section_id	integer	Internal unique identifier for this law.	
+structure_id	integer	Internal unique identifier for the law's containing structural unit.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+history	string or null	The acts of the legislature that created this law.	Only some legal codes include histories.
+full_text	string	The complete text of the law as a single string of text.	This duplicates the collective contents of `text`, but concatenates all subsections into a single string.
+repealed	true/false	Indicates whether this law is still in force.	Only some legal codes continue to publish laws that have been repealed.
+text	array	Contains the subsections of text that comprise this law.	There is one child element for each subsection. Some codes may be broken up not by labelled subsection, but by paragraphs that lack any labels or unique identifiers.
+text	string	The text of the subsection.	
+type	string	What type of subsection this is—`section` (the default), `table`, `illustration`, or possibly others, as dictated by the needs of each legal code.	
+prefixes	array	A list of of the complete prefix path that uniquely identifies this subsection.	
+prefix	string or null	This subsection's identifying prefix.	
+entire_prefix	string or null	The complete, uniquely identifying prefix for this subsection.	The same data that's in `prefixes`, only collapsed into a single string.
+prefix_anchor	string or null	The complete, uniquely identifying prefix for this subsection, ready to be used in a URL.	This is `entire_prefix`, URL encoded.
+level	integer	How deeply nested that this level is, in the hierarchy of subsections. 1 is the top level.	
+ancestry	array	Contains a subsection for each hierarchically nested structural unit that contains this law.	
+id	integer	Internal unique identifier for this structural unit.	
+name	string	The title of this structural unit.	
+identifier	string	The identifer for this structural unit.	This will often—but not always—be a number.
+label	string	The name of this level of structural unit.	
+url	string	The public (non-API) URL for this structural unit.	
+structure_contents	array	Contains a subsection for each law that is part of the immediate structural unit (siblings of the requested section).	
+id	integer	Internal unique identifier for this law.	
+structure_id	integer	Internal unique identifier for the containing structural unit.	
+section_number	string	The unique identifier for this section.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+url	string	The public (non-API) URL for this law.	
+api_url	string	The API URL for this law.	
+previous_section	array	The prior law within the containing structural unit, as ordered.	
+id	integer	Internal unique identifier for this law.	
+structure_id	integer	Internal unique identifier for the containing structural unit.	
+section_number	string	The unique identifier for this section.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+url	string	The public (non-API) URL for this law.	
+api_url	string	The API URL for this law.	
+next_section	array	The following law within the containing structural unit, as ordered.	
+id	integer	Internal unique identifier for this law.	
+structure_id	integer	Internal unique identifier for the containing structural unit.	
+section_number	string	The unique identifier for this section.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+url	string	The public (non-API) URL for this law.	
+api_url	string	The API URL for this law.	
+metadata	array, or null	Contains all metadata about this law that is stored separately in the metadata table.	By default, this contains nothing, but any State Decoded implementation that wants to store additional metadata about laws—data beyond the structure otherwise described here—would emit that metadata here.
+court_decisions	array, or null	Every court decision that cites this law.	Only available within State Decoded implementations that have chosen to ingest court rulings.
+official_url	string, or null	The URL for this law on the official website for this legal code.	
+history_text	string, or null	A narrative version of the history field.	
+references	array	A listing of all other laws that refer to this one.	
+id	integer	Internal unique identifier for this law.	
+section_number	string	The unique identifier for this section.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+url	string	The public (non-API) URL for this law.	
+related	array	A list of all other laws that are have been determined through lexical analysis to be similar to this one.	This list is generated by Solr's MoreLikeThis handler.
+id	integer	Internal unique identifier for this law.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+section_number	string	The unique identifier for this section.	
+url	string	The public (non-API) URL for this law.	
+amendment_years	array	A list of every year in which this law was amended.	
+url	string	The public (non-API) URL for this law.	
+citation	array	A list of formal citation methods for this law.	
+official	string	A formal citation for this law, in The Bluebook format.	
+universal	string	A formal citation for this law, in the AALL Universal Citation Guide format.	
+api_version	integer	The version of the API that is returning this result.	
+Sample query and response
+
+Edited for brevity.
+
+
+http://vacode.org/api/law/15.2-627?key=[api_key]
+
+{
+    "section_number": "15.2-627",
+    "section_id": "7508",
+    "structure_id": "1980",
+    "catch_line": "Department of education.",
+    "history": "Code 1950, § 15-324; 1956, c. 153; 1962, c. 623, § 15.1-644; 1980, c. 559; 1981, c. 246; 1982, cc. 32, 75; 1995, c. 8; 1996, c. 873; 1997, c. 587.",
+    "full_text": "<p>The department of education shall consist of the county school board, the division superintendent of schools and the officers and employees thereof. Except as herein otherwise provided, the county school board and the division superintendent of schools shall exercise all the powers conferred and perform all the duties imposed upon them by general law. Except for the initial elected board which shall consist of five members, the county school board shall be composed of not less than three nor more than nine members; however, there shall be at least one school board member elected from each of the county’s magisterial or election districts. The members shall be elected by popular vote from election districts coterminous with the election districts for the board of county supervisors. The exact number of members shall be determined by the board of county supervisors. Elections of school board members shall be held to coincide with the elections of members of the board of county supervisors at the regular general election in November. The terms of office for the county school board members shall be the same as the terms of the members of the board of county supervisors and shall commence on January 1 following their election.<\/p><p>A vacancy in the office of school board member shall be filled pursuant to §§ 24.2-226 and 24.2-228.<\/p><p>In order to have their names placed on the ballot, all candidates shall be nominated only by petition as provided by general law pursuant to § 24.2-506.<\/p><p>The county school board may also appoint a resident of the county to cast the deciding vote in case of a tie vote of the school board as provided in § 22.1-75. The tie breaker, if any, shall be appointed for a four-year term whether appointed to fill a vacancy caused by expiration of term or otherwise.<\/p><p>The chairman of the county school board, for the purpose of appearing before the board of county supervisors, shall be considered head of this department, unless some other person in the department shall be designated by the school board for such purpose.<\/p>",
+    "repealed": "n",
+    "text": {
+        "0": {
+            "text": "The department of education shall consist of the county school board, the division superintendent of schools and the officers and employees thereof. Except as herein otherwise provided, the county school board and the division superintendent of schools shall exercise all the powers conferred and perform all the duties imposed upon them by general law. Except for the initial elected board which shall consist of five members, the county school board shall be composed of not less than three nor more than nine members; however, there shall be at least one school board member elected from each of the county’s magisterial or election districts. The members shall be elected by popular vote from election districts coterminous with the election districts for the board of county supervisors. The exact number of members shall be determined by the board of county supervisors. Elections of school board members shall be held to coincide with the elections of members of the board of county supervisors at the regular general election in November. The terms of office for the county school board members shall be the same as the terms of the members of the board of county supervisors and shall commence on January 1 following their election.",
+            "type": "section",
+            "prefixes": [
+                ""
+            ],
+            "prefix": "",
+            "entire_prefix": "",
+            "prefix_anchor": "",
+            "level": 1
+        },
+        "1": {
+            "text": "A vacancy in the office of school board member shall be filled pursuant to §§ 24.2-226 and 24.2-228.",
+            "type": "section",
+            "prefixes": [
+                ""
+            ],
+            "prefix": "",
+            "entire_prefix": "",
+            "prefix_anchor": "",
+            "level": 1
+        },
+        "2": {
+            "text": "In order to have their names placed on the ballot, all candidates shall be nominated only by petition as provided by general law pursuant to § 24.2-506.",
+            "type": "section",
+            "prefixes": [
+                ""
+            ],
+            "prefix": "",
+            "entire_prefix": "",
+            "prefix_anchor": "",
+            "level": 1
+        },
+        "3": {
+            "text": "The county school board may also appoint a resident of the county to cast the deciding vote in case of a tie vote of the school board as provided in § 22.1-75. The tie breaker, if any, shall be appointed for a four-year term whether appointed to fill a vacancy caused by expiration of term or otherwise.",
+            "type": "section",
+            "prefixes": [
+                ""
+            ],
+            "prefix": "",
+            "entire_prefix": "",
+            "prefix_anchor": "",
+            "level": 1
+        },
+        "4": {
+            "text": "The chairman of the county school board, for the purpose of appearing before the board of county supervisors, shall be considered head of this department, unless some other person in the department shall be designated by the school board for such purpose.",
+            "type": "section",
+            "prefixes": [
+                ""
+            ],
+            "prefix": "",
+            "entire_prefix": "",
+            "prefix_anchor": "",
+            "level": 1
+        }
+    },
+    "ancestry": {
+        "1": {
+            "id": "1980",
+            "name": "County Manager Form of Government",
+            "identifier": "6",
+            "label": "chapter",
+            "url": "/15.2/6/"
+        },
+        "2": {
+            "id": "27",
+            "name": "Counties, Cities and Towns",
+            "identifier": "15.2",
+            "label": "title",
+            "url": "/15.2/"
+        }
+    },
+    "structure_contents": {
+        "0": {
+            "id": "7481",
+            "structure_id": "1980",
+            "section_number": "15.2-600",
+            "catch_line": "Designation of form; applicability of chapter.",
+            "url": "http://vacode.org/15.2-600/",
+            "api_url": "http://vacode.org/api/law/15.2-600/"
+        },
+        "1": {
+            "id": "7482",
+            "structure_id": "1980",
+            "section_number": "15.2-601",
+            "catch_line": "Adoption of county manager form.",
+            "url": "http://vacode.org/15.2-601/",
+            "api_url": "http://vacode.org/api/law/15.2-601/"
+        },
+        "2": {
+            "id": "7483",
+            "structure_id": "1980",
+            "section_number": "15.2-602",
+            "catch_line": "Powers vested in board of supervisors; election and terms of members; vacancies.",
+            "url": "http://vacode.org/15.2-602/",
+            "api_url": "http://vacode.org/api/law/15.2-602/"
+        },
+        "3": {
+            "id": "7484",
+            "structure_id": "1980",
+            "section_number": "15.2-603",
+            "catch_line": "Referendum on election of supervisors by districts or at large.",
+            "url": "http://vacode.org/15.2-603/",
+            "api_url": "http://vacode.org/api/law/15.2-603/"
+        },
+        "4": {
+            "id": "7485",
+            "structure_id": "1980",
+            "section_number": "15.2-604",
+            "catch_line": "General powers of board.",
+            "url": "http://vacode.org/15.2-604/",
+            "api_url": "http://vacode.org/api/law/15.2-604/"
+        },
+        "5": {
+            "id": "7486",
+            "structure_id": "1980",
+            "section_number": "15.2-605",
+            "catch_line": "Prohibiting misdemeanors and providing penalties.",
+            "url": "http://vacode.org/15.2-605/",
+            "api_url": "http://vacode.org/api/law/15.2-605/"
+        },
+        "6": {
+            "id": "7487",
+            "structure_id": "1980",
+            "section_number": "15.2-606",
+            "catch_line": "Investigation of county officers.",
+            "url": "http://vacode.org/15.2-606/",
+            "api_url": "http://vacode.org/api/law/15.2-606/"
+        },
+        "7": {
+            "id": "7488",
+            "structure_id": "1980",
+            "section_number": "15.2-607",
+            "catch_line": "Organization of departments.",
+            "url": "http://vacode.org/15.2-607/",
+            "api_url": "http://vacode.org/api/law/15.2-607/"
+        },
+        "8": {
+            "id": "7489",
+            "structure_id": "1980",
+            "section_number": "15.2-608",
+            "catch_line": "Designation of officers to perform certain duties.",
+            "url": "http://vacode.org/15.2-608/",
+            "api_url": "http://vacode.org/api/law/15.2-608/"
+        },
+        "9": {
+            "id": "7490",
+            "structure_id": "1980",
+            "section_number": "15.2-609",
+            "catch_line": "Appointment of county manager.",
+            "url": "http://vacode.org/15.2-609/",
+            "api_url": "http://vacode.org/api/law/15.2-609/"
+        },
+        "10": {
+            "id": "7491",
+            "structure_id": "1980",
+            "section_number": "15.2-610",
+            "catch_line": "Tenure of office; removal.",
+            "url": "http://vacode.org/15.2-610/",
+            "api_url": "http://vacode.org/api/law/15.2-610/"
+        },
+        "11": {
+            "id": "7492",
+            "structure_id": "1980",
+            "section_number": "15.2-611",
+            "catch_line": "Disability of county manager.",
+            "url": "http://vacode.org/15.2-611/",
+            "api_url": "http://vacode.org/api/law/15.2-611/"
+        },
+        "12": {
+            "id": "7493",
+            "structure_id": "1980",
+            "section_number": "15.2-612",
+            "catch_line": "Manager responsible for administration of affairs of county; appointment of officers and employees.",
+            "url": "http://vacode.org/15.2-612/",
+            "api_url": "http://vacode.org/api/law/15.2-612/"
+        }
+    },
+    "previous_section": {
+        "id": "7507",
+        "structure_id": "1980",
+        "section_number": "15.2-626",
+        "catch_line": "Department and board of social services.",
+        "url": "http://vacode.org/15.2-626/",
+        "api_url": "http://vacode.org/api/law/15.2-626/"
+    },
+    "next_section": {
+        "id": "7509",
+        "structure_id": "1980",
+        "section_number": "15.2-628",
+        "catch_line": "Terms of school boards.",
+        "url": "http://vacode.org/15.2-628/",
+        "api_url": "http://vacode.org/api/law/15.2-628/"
+    },
+    "metadata": {
+        "history": {
+            "1": {
+                "year": "1956",
+                "chapter": "153"
+            },
+            "2": {
+                "year": "1962",
+                "chapter": "623",
+                "section": "1962, c. 623, § 15.1-644"
+            },
+            "3": {
+                "year": "1980",
+                "chapter": "559"
+            },
+            "4": {
+                "year": "1981",
+                "chapter": "246"
+            },
+            "5": {
+                "year": "1982",
+                "chapter": [
+                    "32",
+                    "75"
+                ]
+            },
+            "6": {
+                "year": "1995",
+                "chapter": "8"
+            },
+            "7": {
+                "year": "1996",
+                "chapter": "873"
+            },
+            "8": {
+                "year": "1997",
+                "chapter": "587"
+            }
+        }
+    },
+    "court_decisions": false,
+    "official_url": "http://lis.virginia.gov/cgi-bin/legp604.exe?000+cod+15.2-627",
+    "history_text": "This law has been modified 7 times since it was first created in 1956. Those modifications are cataloged by “The Acts of Assembly,” a state publication, by year and chapter. Those modifications that can be read on the General Assembly’s website will be linked accordingly. Those modifications are as follows: in 1962, chapter 623; in 1980, chapter 559; in 1981, chapter 246; in 1982, chapters 32, 75; in 1995 chapter <a href=\"http://leg1.state.va.us/cgi-bin/legp504.exe?951+ful+CHAP0008\">8<\/a>; in 1996 chapter <a href=\"http://leg1.state.va.us/cgi-bin/legp504.exe?961+ful+CHAP0873\">873<\/a>; in 1997 chapter <a href=\"http://leg1.state.va.us/cgi-bin/legp504.exe?971+ful+CHAP0587\">587<\/a>.",
+    "references": [
+        {
+            "id": "12528",
+            "section_number": "22.1-29.1",
+            "catch_line": "Public hearing before appointment of school board members.",
+            "url": "http://vacode.org/22.1-29.1/"
+        },
+        {
+            "id": "12533",
+            "section_number": "22.1-34",
+            "catch_line": "Application of article.",
+            "url": "http://vacode.org/22.1-34/"
+        },
+        {
+            "id": "12542",
+            "section_number": "22.1-41",
+            "catch_line": "Application of article.",
+            "url": "http://vacode.org/22.1-41/"
+        },
+        {
+            "id": "12596",
+            "section_number": "22.1-75",
+            "catch_line": "Procedure in case of tie vote.",
+            "url": "http://vacode.org/22.1-75/"
+        }
+    ],
+    "related": {
+        "0": {
+            "id": "7469",
+            "catch_line": "Department of education.",
+            "section_number": "15.2-531",
+            "url": "/15.2-531/"
+        },
+        "1": {
+            "id": "7618",
+            "catch_line": "Department of education.",
+            "section_number": "15.2-837",
+            "url": "/15.2-837/"
+        },
+        "2": {
+            "id": "12566",
+            "catch_line": "Election of school board members; appointment of tie breaker.",
+            "section_number": "22.1-57.3",
+            "url": "/22.1-57.3/"
+        },
+        "3": {
+            "id": "7428",
+            "catch_line": "County school board and division superintendent of schools.",
+            "section_number": "15.2-410",
+            "url": "/15.2-410/"
+        },
+        "4": {
+            "id": "7583",
+            "catch_line": "Powers of county vested in board of supervisors; membership, election, terms, etc., of board; vacancies; powers of chairman.",
+            "section_number": "15.2-802",
+            "url": "/15.2-802/"
+        }
+    },
+    "amendment_years": {
+        "0": "1950",
+        "1": "1956",
+        "2": "1962",
+        "3": "1980",
+        "4": "1981",
+        "5": "1982",
+        "6": "1995",
+        "7": "1996",
+        "8": "1997"
+    },
+    "url": "http://vacode.org/15.2-627/",
+    "citation": {
+        "official": "Va. Code §&nbsp;15.2-627",
+        "universal": "VA Code §&nbsp;15.2-627"
+    },
+    "api_version": "1.0"
+}
+Structure
+
+When provided with a structural identifier identifying an individual structural unit (e.g., a title, a chapter, a part, etc.), returns everything that The State Decoded knows about that structural unit.
+
+Query format
+
+http://vacode.org/api/structure/[identifier]?key=[api_key]
+
+Leave [identifier] blank to get a top-level listing of structural units—that is, the major structural units that make up the basic divisions of the code (e.g., titles).
+
+Optional parameters
+
+Callback
+
+Pass the parameter callback and a callback string to have results returned as JSONP.
+
+http://vacode.org/api/structure/[identifier]?key=[api_key]&callback=d9f3lIb013
+
+Specified fields
+
+Pass the parameter fields and a comma-separated listing of fields to limit the response to those fields.
+
+http://vacode.org/api/structure/[identifier]?key=[api_key]&fields=catch_line,url_official_url,citation
+
+Fields
+
+Name	Type	Description	Notes
+ancestry	array	Information about every structural unit included in the path specified in the request.	
+id	integer	Internal unique identifier for this structural unit.	
+identifier	string	The identifer for this structural unit.	This will often—but not always—be a number.
+name	string	The title of this structural unit.	
+label	string	The name of this level of structural unit.	
+parent_id	integer	Internal unique identifier for this structural unit’s parent.	
+level	integer	How deeply nested that this level is, in the hierarchy of subsections. 1 is the top level.	
+url	string	The public (non-API) URL for this structural unit.	
+children	array	A list of every structural unit that is a child of the requested one.	
+id	integer	Internal unique identifier for this structural unit.	
+label	string	The name of this level of structural unit.	
+name	string	The title of this structural unit.	
+identifier	string	The identifer for this structural unit.	This will often—but not always—be a number.
+url	string	The public (non-API) URL for this structural unit.	
+api_url	string	The API URL for this structural unit.	
+laws	array	A list of every law that is a child of the requested structural unit.	
+id	integer	Internal unique identifier for this law.	
+structure_id	integer	Internal unique identifier for the containing structural unit.	
+section_number	string	The unique identifier for this section.	
+catch_line	string or null	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+url	string	The public (non-API) URL for this law.	
+api_url	string	The API URL for this law.	
+api_version	integer	The version of the API that is returning this result.	
+Sample query and response
+
+http://vacode.org/api/structure/18.2?key=[api_key]
+
+
+{
+    "ancestry": {
+        "0": {
+            "id": "30",
+            "identifier": "18.2",
+            "name": "Crimes and Offenses Generally",
+            "label": "title",
+            "parent_id": "",
+            "level": 1,
+            "url": "http://vacode.org/18.2/"
+        }
+    },
+    "children": {
+        "0": {
+            "id": "2082",
+            "label": "chapter",
+            "name": "In General",
+            "identifier": "1",
+            "url": "http://vacode.org/18.2/1/",
+            "api_url": "http://vacode.org/api/structure/18.2/1/"
+        },
+        "1": {
+            "id": "2083",
+            "label": "chapter",
+            "name": "Principals and Accessories",
+            "identifier": "2",
+            "url": "http://vacode.org/18.2/2/",
+            "api_url": "http://vacode.org/api/structure/18.2/2/"
+        },
+        "2": {
+            "id": "2084",
+            "label": "chapter",
+            "name": "Inchoate Offenses",
+            "identifier": "3",
+            "url": "http://vacode.org/18.2/3/",
+            "api_url": "http://vacode.org/api/structure/18.2/3/"
+        },
+        "3": {
+            "id": "2085",
+            "label": "chapter",
+            "name": "Crimes Against the Person",
+            "identifier": "4",
+            "url": "http://vacode.org/18.2/4/",
+            "api_url": "http://vacode.org/api/structure/18.2/4/"
+        },
+        "4": {
+            "id": "2086",
+            "label": "chapter",
+            "name": "Crimes Against Property",
+            "identifier": "5",
+            "url": "http://vacode.org/18.2/5/",
+            "api_url": "http://vacode.org/api/structure/18.2/5/"
+        },
+        "5": {
+            "id": "2087",
+            "label": "chapter",
+            "name": "Crimes Involving Fraud",
+            "identifier": "6",
+            "url": "http://vacode.org/18.2/6/",
+            "api_url": "http://vacode.org/api/structure/18.2/6/"
+        },
+        "6": {
+            "id": "2088",
+            "label": "chapter",
+            "name": "Crimes Involving Health and Safety",
+            "identifier": "7",
+            "url": "http://vacode.org/18.2/7/",
+            "api_url": "http://vacode.org/api/structure/18.2/7/"
+        },
+        "7": {
+            "id": "2089",
+            "label": "chapter",
+            "name": "Crimes Involving Morals and Decency",
+            "identifier": "8",
+            "url": "http://vacode.org/18.2/8/",
+            "api_url": "http://vacode.org/api/structure/18.2/8/"
+        },
+        "8": {
+            "id": "2090",
+            "label": "chapter",
+            "name": "Crimes Against Peace and Order",
+            "identifier": "9",
+            "url": "http://vacode.org/18.2/9/",
+            "api_url": "http://vacode.org/api/structure/18.2/9/"
+        },
+        "9": {
+            "id": "2091",
+            "label": "chapter",
+            "name": "Crimes Against the Administration of Justice",
+            "identifier": "10",
+            "url": "http://vacode.org/18.2/10/",
+            "api_url": "http://vacode.org/api/structure/18.2/10/"
+        },
+        "10": {
+            "id": "2092",
+            "label": "chapter",
+            "name": "Offenses Against the Sovereignty of the Commonwealth",
+            "identifier": "11",
+            "url": "http://vacode.org/18.2/11/",
+            "api_url": "http://vacode.org/api/structure/18.2/11/"
+        },
+        "11": {
+            "id": "2093",
+            "label": "chapter",
+            "name": "Miscellaneous",
+            "identifier": "12",
+            "url": "http://vacode.org/18.2/12/",
+            "api_url": "http://vacode.org/api/structure/18.2/12/"
+        },
+        "12": {
+            "id": "2094",
+            "label": "chapter",
+            "name": "Virginia Racketeer Influenced and Corrupt Organization Act",
+            "identifier": "13",
+            "url": "http://vacode.org/18.2/13/",
+            "api_url": "http://vacode.org/api/structure/18.2/13/"
+        }
+    },
+    "laws": false,
+    "api_version": "1.0"
+}
+Search
+
+When provided with a term, returns all uses of that term within the code, sorted by relevance, limited to the top 100 results.
+
+Query format
+
+http://vacode.org/api/search/[word_or_phrase]?key=[api_key]
+
+Optional parameters
+
+Detail Level
+
+Pass the parameter detailed and either true or false to indicate whether you want brief results or detailed results. Detailed results are exactly the same as if you'd used the Law method for each result. The standard fields returned by the Search method are all replaced with the standard fields returned by the Law method, with the exception of the score field, which remains.
+
+Callback
+
+Pass the parameter callback and a callback string to have results returned as JSONP.
+
+http://vacode.org/api/search/[word_or_phrase]?key=[api_key]&callback=d9f3lIb013
+
+Specified fields
+
+Pass the parameter fields and a comma-separated list of fields to limit the response to those fields.
+
+http://vacode.org/api/search/word_or_phrase]?key=[api_key]&fields=results
+
+Fields
+
+Name	Type	Description	Notes
+results	object	A list of the results of this search.	Limited to the first 100 results.
+section_number	string	The unique identifier for this section.	
+catch_line	string	The title of this section.	Not all legal codes have catch lines. California's laws, for instance, lack them.
+excerpt	string	An excerpt of the text of the section.	Includes the portions of the text where the search term is used.
+text	string	The entire text of the section.	
+url	string	The URL of the section in which the definition appears.	
+score	integer	The score measuring the relevance of this document.	As provided by Solr (Lucene).
+ancestry	array	Lists each hierarchically nested structural unit that contains this law.	
+total_records	integer	The number of records that match this search term.	This number may exceed the number of records returned, since this method is limited to the top 100 results.
+api_version	integer	The version of the API that is returning this result.	
+Sample query and response
+
+Edited for brevity.
+
+http://vacode.org/api/search/person?key=[api_key]
+
+
+{
+	"results": {
+		"section_number": "1-230",
+		"catch_line": "Person.",
+		"excerpt": "“Person” includes any individual, corporation, partnership, association, cooperative, limited liability company.....",
+		"text": "“Person” includes any individual, corporation, partnership, association, cooperative, limited liability company, trust, joint venture, government, political subdivision, or any other legal or commercial entity and any successor, representative, agent, agency, or instrumentality thereof.",
+		"url": "http://vacode.org/1-230/",
+		"score": "5.6"
+	},
+	"total_records": "2,263",
+    "api_version": "1.0",
+	"ancestry": {
+		"title": "General Provisions",
+		"chapter": "Common Law and Rules of Construction"
+	}
+}
+Suggest
+
+When provided with a term, or a portion thereof, returns a list of suggestions for how to complete that term, sorted by likelihood of usefulness, limited to 5 results. Intended to be used internally, within the site, as real-time suggestions while typing in search parameters.
+
+Query format
+
+http://vacode.org/api/suggest/[word_or_phrase]?key=[api_key]
+
+Optional parameters
+
+Callback
+
+Pass the parameter callback and a callback string to have results returned as JSONP.
+
+http://vacode.org/api/suggest/[word_or_phrase]?key=[api_key]&callback=d9f3lIb013
+
+Fields
+
+Name	Type	Description	Notes
+terms	object	A list of the suggested terms.	Limited to the first 4 results.
+api_version	integer	The version of the API that is returning this result.	
+Sample query and response
+
+Edited for brevity.
+
+http://vacode.org/api/suggest/lawsu?key=[api_key]
+
+
+{
+	"terms": [
+		{
+			id: 0,
+			term: "laws"
+		},
+		{
+			id: 1,
+			term: "lawful"
+		},
+		{
+			id: 2,
+			term: "lapse"
+		},
+		{
+			id: 3,
+			term: "lawsuit"
+		},
+		{
+			id: 4,
+			term: "lawns"
+		}
+	],
+    "api_version": "1.0",
+}
+Errors
+
+When a request cannot be completed, the API will return a JSON-formatted error. For example, if an invalid key is provided in a request, the response would be as follows:
+
+
+"error"
+{
+    "message": "An Error Occurred",
+    "details": "Invalid key."
+}
