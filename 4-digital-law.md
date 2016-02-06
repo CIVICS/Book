@@ -1,4 +1,4 @@
-See Gist: https://gist.github.com/dazzaji/d08e726de06c42c0a001#file-blt-scenarios-md
+See Up to Date Gist: https://gist.github.com/dazzaji/d08e726de06c42c0a001#file-blt-scenarios-md
 
 ## Focused Scenarios for Digital Law
 
