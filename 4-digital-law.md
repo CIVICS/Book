@@ -1,6 +1,6 @@
 See Gist: https://gist.github.com/dazzaji/d08e726de06c42c0a001#file-blt-scenarios-md
 
-## Call to Action
+## Focused Scenarios for Digital Law
 
 * Joi scenario re meaning of digital transfers (eg the date when digital instrument no longer negotiable)
 * Sandy scenario re adaptive algorythmic laws (eg model tumed as cases adjudicated and capable of simulations)  
